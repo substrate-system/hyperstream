@@ -1,25 +1,32 @@
-const through = require('through2')
-const inherits = require('inherits')
-const Splicer = require('stream-splicer')
-const Duplexer = require('readable-stream').Duplexer
+import through2, { type Transform, type TransformCallback } from 'through2'
+import inherits from 'inherits'
+import Splicer from 'stream-splicer'
+import { Duplex as DuplexStream } from 'readable-stream'
+import Match from './match.js'
+import selfClosing from './lib/self_closing.js'
+import getTag from './lib/get_tag.js'
+import lang from './lib/lang.js'
 
-const Match = require('./lib/match.js')
-const selfClosing = require('./lib/self_closing.js')
-const getTag = require('./lib/get_tag.js')
-const lang = require('./lib/lang.js')
-
-const nextTick = typeof setImmediate !== 'undefined'
+const nextTick: (callback: (...args: any[]) => void) => void = typeof setImmediate !== 'undefined'
     ? setImmediate : process.nextTick
 
-module.exports = Plex
+export default Plex
 inherits(Plex, Splicer)
 
-function Plex (sel, cb) {
-    const self = this
+interface PlexOptions {
+    objectMode: boolean;
+}
+
+interface SelectorEntry {
+    test: (tree: any) => boolean;
+    fn: (elem: any) => void;
+}
+
+function Plex (this: any, sel?: string, cb?: (elem: any) => void): void {
     if (!(this instanceof Plex)) return new Plex(sel, cb)
 
-    const streams = [this._pre(), [], this._post()]
-    Splicer.call(this, streams, { objectMode: true })
+    const streams: any[] = [this._pre(), [], this._post()]
+    Splicer.call(this, streams, { objectMode: true } as PlexOptions)
 
     this._root = {}
     this._current = this._root
@@ -30,19 +37,19 @@ function Plex (sel, cb) {
     if (sel && cb) this.select(sel, cb)
 }
 
-Plex.prototype._pre = function () {
+Plex.prototype._pre = function (this: any): Transform {
     const self = this
-    let pipeline
+    let pipeline: any
 
-    return through.obj(function (row, enc, next) {
+    return through2.obj(function (this: Transform, row: any, enc: BufferEncoding, next: TransformCallback) {
         const tree = self._updateTree(row)
         if (!pipeline) pipeline = self.get(1)
 
-        let matched = null
+        let matched: any = null
 
         if (row[0] === 'open') {
             for (let i = 0, l = self._selectors.length; i < l; i++) {
-                var s = self._selectors[i]
+                const s: SelectorEntry = self._selectors[i]
                 if (s.test(tree)) {
                     matched = self._createMatch(tree, s.fn)
                     this.push(['FIRST', matched])
@@ -55,7 +62,7 @@ Plex.prototype._pre = function () {
         }
 
         if ((matched && tree.selfClosing) || row[0] === 'close') {
-            var s = pipeline.get(0)
+            const s = pipeline.get(0)
             if (s && s.finished && s.finished(tree)) {
                 s.once('close', function () {
                     nextTick(next)
@@ -71,21 +78,21 @@ Plex.prototype._pre = function () {
     })
 }
 
-Plex.prototype._post = function () {
-    return through.obj(function (row, enc, next) {
+Plex.prototype._post = function (this: any): Transform {
+    return through2.obj(function (this: Transform, row: any, enc: BufferEncoding, next: TransformCallback) {
         if (row[0] !== 'FIRST') this.push(row)
         next()
     })
 }
 
-Plex.prototype.select = function (sel, cb) {
+Plex.prototype.select = function (this: any, sel: string, cb: (elem: any) => void): any {
     this._selectors.push({ test: this._lang(sel), fn: cb })
     return this
 }
 
-Plex.prototype._updateTree = function (row) {
+Plex.prototype._updateTree = function (this: any, row: any): any {
     if (row[0] === 'open') {
-        const node = { parent: this._current, row }
+        const node: any = { parent: this._current, row }
         node.selfClosing = node.parent && selfClosing(getTag(node))
         if (!this._current.children) this._current.children = [node]
         else this._current.children.push(node)
@@ -96,7 +103,7 @@ Plex.prototype._updateTree = function (row) {
     return this._current
 }
 
-Plex.prototype._createMatch = function (tree, fn) {
+Plex.prototype._createMatch = function (this: any, tree: any, fn: (elem: any) => void): any {
     const self = this
     const m = new Match(tree, fn)
     const pipeline = this.get(1)

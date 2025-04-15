@@ -1,4 +1,4 @@
-import trumpet from 'trumpet'
+import trumpet from './trumpet.js'
 import { Transform, Readable } from 'node:stream'
 import { encode as encodeHtml } from 'ent'
 
