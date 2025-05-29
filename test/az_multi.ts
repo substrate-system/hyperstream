@@ -1,32 +1,33 @@
-const test = require('tap').test
-const hyperstream = require('../')
-const through = require('through')
-const concat = require('concat-stream')
+import { test } from '@substrate-system/tapzero'
+import hyperstream from '../src/index.js'
+import through from 'through'
+import concat from 'concat-stream'
+import fs from 'fs'
+import path from 'path'
 
-const fs = require('fs')
-const expected = fs.readFileSync(__dirname + '/az_multi/expected.html', 'utf8')
+const expected = fs.readFileSync(path.join(__dirname, 'az_multi', 'expected.html'), 'utf8')
 
 test('fs stream and a slow stream', function (t) {
     t.plan(1)
 
     const hs = hyperstream({
         '#a': createAzStream(),
-        '#b': fs.createReadStream(__dirname + '/az_multi/b.html'),
+        '#b': fs.createReadStream(path.join(__dirname, 'az_multi', 'b.html')),
         '#c': createAzStream(),
-        '#d': fs.createReadStream(__dirname + '/az_multi/d.html')
+        '#d': fs.createReadStream(path.join(__dirname, 'az_multi', 'd.html'))
     })
     hs.pipe(concat(function (src) {
         t.equal(src.toString('utf8'), expected)
     }))
 
-    const rs = fs.createReadStream(__dirname + '/az_multi/index.html')
+    const rs = fs.createReadStream(path.join(__dirname, 'az_multi', 'index.html'))
     rs.pipe(hs)
 })
 
 function createAzStream () {
     const rs = through()
     let ix = 0
-    var iv = setInterval(function () {
+    const iv = setInterval(function () {
         rs.queue(String.fromCharCode(97 + ix))
         if (++ix === 26) {
             clearInterval(iv)

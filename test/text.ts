@@ -1,8 +1,8 @@
-const hyperstream = require('../')
-const test = require('tap').test
-const concat = require('concat-stream')
-const through = require('through2')
-const ent = require('ent')
+import hyperstream from '../src/index.js'
+import { test } from '@substrate-system/tapzero'
+import concat from 'concat-stream'
+import through from 'through2'
+import ent from 'ent'
 
 test('string _text', function (t) {
     t.plan(1)
@@ -13,7 +13,9 @@ test('string _text', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>beep boop</b>') + '</div>'
+            '<div class="row">' +
+                ent.encode('<b>beep boop</b>') +
+                '</div>'
         )
     }))
     hs.end('<div class="row"></div>')
@@ -31,7 +33,9 @@ test('stream _text', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>beep boop</b>') + '</div>'
+            '<div class="row">' +
+                ent.encode('<b>beep boop</b>') +
+                '</div>'
         )
     }))
     hs.end('<div class="row"></div>')

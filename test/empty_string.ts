@@ -1,25 +1,25 @@
-const test = require('tap').test
-const concat = require('concat-stream')
-const http = require('http')
-const through = require('through')
-const hyperstream = require('../')
-const hyperquest = require('hyperquest')
+import { test } from '@substrate-system/tapzero'
+import concat from 'concat-stream'
+import http from 'http'
+import through from 'through'
+import hyperstream from '../src/index.js'
+import hyperquest from 'hyperquest'
 
 test('queue an empty string to an http response', function (t) {
     t.plan(1)
-    t.on('end', function () {
-        server.close()
-    })
 
-    var server = http.createServer(function (req, res) {
+    const server = http.createServer(function (req, res) {
         createStream().pipe(res)
     })
     server.listen(function () {
-        const port = server.address().port
-        const hq = hyperquest('http://localhost:' + port)
-        hq.pipe(concat(function (src) {
-            t.equal(String(src), '<div class="a">xyz</div>')
-        }))
+        const address = server.address()
+        if (address && typeof address !== 'string') {
+            const port = address.port
+            const hq = hyperquest('http://localhost:' + port)
+            hq.pipe(concat(function (src) {
+                t.equal(String(src), '<div class="a">xyz</div>')
+            }))
+        }
     })
 })
 

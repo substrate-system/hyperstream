@@ -81,7 +81,11 @@ export class Tokenize extends Transform {
         return tag.toLowerCase()
     }
 
-    private _testRaw (buf: Buffer, offset: number, index: number): [Buffer, Buffer] | undefined {
+    private _testRaw (
+        buf: Buffer,
+        offset: number,
+        index: number
+    ): [Buffer, Buffer] | undefined {
         if (!compare(this._last, this.raw)) return
 
         this.buffers.push(buf.slice(offset, index + 1))

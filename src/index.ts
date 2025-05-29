@@ -1,4 +1,4 @@
-import trumpet from './trumpet.js'
+import { Trumpet } from './trumpet.js'
 import { Transform, Readable } from 'node:stream'
 import { encode as encodeHtml } from 'ent'
 
@@ -12,8 +12,8 @@ interface StreamValue {
     [key: string]: any;
 }
 
-export default function hyperstream (streams: Record<string, string | StreamValue | Readable | null>): Transform {
-    const tr = trumpet()
+export default function hyperstream (streams: Record<string, string | StreamValue | Readable | null> = {}): Trumpet {
+    const tr = new Trumpet()
     tr.setMaxListeners(Infinity)
 
     Object.entries(streams).forEach(([key, value]) => {

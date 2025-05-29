@@ -1,6 +1,6 @@
-const test = require('tap').test
-const hyperstream = require('..')
-const concat = require('concat-stream')
+import { test } from '@substrate-system/tapzero'
+import hyperstream from '../src/index.js'
+import concat from 'concat-stream'
 
 const src = '<div><input value=""><span></span></div>'
 const expected = '<div><input value="value"><span class="class"></span></div>'

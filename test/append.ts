@@ -1,8 +1,7 @@
-const hyperstream = require('../')
-const test = require('tap').test
-const concat = require('concat-stream')
-const through = require('through2')
-const ent = require('ent')
+import hyperstream from '../src/index.js'
+import { test } from '@substrate-system/tapzero'
+import concat from 'concat-stream'
+import ent from 'ent'
 
 test('append implicit text', function (t) {
     t.plan(1)

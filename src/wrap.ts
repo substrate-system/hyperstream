@@ -56,7 +56,9 @@ export const wrap = (elem: {
                             reads++
                         }
                     }
-                    if (reads === 0) rs.once('readable', this.read.bind(this))
+                    if (reads === 0) {
+                        rs.once('readable', this.read.bind(this))
+                    }
                 }
             })
             rs.on('end', () => r.push(null))
@@ -91,7 +93,9 @@ export const wrap = (elem: {
                             reads++
                         }
                     }
-                    if (reads === 0) s.once('readable', this.read.bind(this))
+                    if (reads === 0) {
+                        s.once('readable', this.read.bind(this))
+                    }
                 }
             })
             d.on('finish', () => s.end())

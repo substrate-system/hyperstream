@@ -1,7 +1,7 @@
 import { wrap as wrapElem } from './wrap.js'
 import { Tokenize } from './tokenize.js'
 import { Duplex, Readable, Writable } from 'node:stream'
-import { select } from './html-select.js'
+import Plex from './html-select/index.js'
 
 interface SelectResult {
     getAttribute(key: string, cb?: (value: string | null) => void): this;
@@ -12,6 +12,9 @@ interface SelectResult {
     createWriteStream(opts?: { outer?: boolean }): Writable;
     createStream(opts?: { outer?: boolean }): Duplex;
 }
+
+// Use Plex as the main selector engine
+export const select = (...args: any[]) => new Plex(...args)
 
 /**
  * Parse and transform streaming HTML using CSS selectors.
@@ -72,19 +75,16 @@ export class Trumpet extends Duplex {
         const sets: [string, string][] = []
         const removes: string[] = []
 
-        let element: any = null
         let welem: SelectResult | null = null
 
         this._select.select(selector, (elem: any) => {
             if (firstOnly && welem) return
 
-            element = elem
             welem = wrapElem(elem)
 
             if (cb) cb(welem)
 
             elem.once('close', () => {
-                element = null
                 welem = null
             })
 

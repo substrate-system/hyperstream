@@ -1,9 +1,10 @@
-const test = require('tap').test
-const through = require('through')
-const hyperstream = require('../')
+import { test } from '@substrate-system/tapzero'
+import through from 'through'
+import hyperstream from '../src/index.js'
+import fs from 'fs'
+import path from 'path'
 
-const fs = require('fs')
-const expected = fs.readFileSync(__dirname + '/num/expected.html', 'utf8')
+const expected = fs.readFileSync(path.join(__dirname, 'num', 'expected.html'), 'utf8')
 
 test('num', function (t) {
     t.plan(1)
@@ -14,7 +15,7 @@ test('num', function (t) {
         '#c': { n: 123 },
         '#c span': function (html) { return html.length }
     })
-    const rs = fs.createReadStream(__dirname + '/num/index.html')
+    const rs = fs.createReadStream(path.join(__dirname, 'num', 'index.html'))
 
     let data = ''
     rs.pipe(hs).pipe(through(write, end))

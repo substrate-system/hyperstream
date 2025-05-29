@@ -1,4 +1,4 @@
-const test = require('tap').test
+import { test } from '@substrate-system/tapzero'
 const through = require('through')
 const hyperstream = require('../')
 

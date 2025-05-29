@@ -1,8 +1,7 @@
-const hyperstream = require('../')
-const test = require('tap').test
-const concat = require('concat-stream')
-const through = require('through2')
-const ent = require('ent')
+import hyperstream from '../src/index.js'
+import { test } from '@substrate-system/tapzero'
+import concat from 'concat-stream'
+import ent from 'ent'
 
 test('prepend implicit text', function (t) {
     t.plan(1)
@@ -13,7 +12,9 @@ test('prepend implicit text', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>so</b>') + ' wow</div>'
+            '<div class="row">' +
+                ent.encode('<b>so</b>') +
+                ' wow</div>'
         )
     }))
     hs.end('<div class="row"> wow</div>')
@@ -28,7 +29,9 @@ test('prepend text', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>so</b>') + ' wow</div>'
+            '<div class="row">' +
+                ent.encode('<b>so</b>') +
+                ' wow</div>'
         )
     }))
     hs.end('<div class="row"> wow</div>')
@@ -58,7 +61,9 @@ test('prepend implicit text pre-existing markup', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>so</b>') + ' <i>wow</i></div>'
+            '<div class="row">' +
+                ent.encode('<b>so</b>') +
+                ' <i>wow</i></div>'
         )
     }))
     hs.end('<div class="row"> <i>wow</i></div>')
@@ -73,7 +78,9 @@ test('prepend text pre-existing markup', function (t) {
     hs.pipe(concat(function (body) {
         t.equal(
             body.toString('utf8'),
-            '<div class="row">' + ent.encode('<b>so</b>') + ' <i>wow</i></div>'
+            '<div class="row">' +
+                ent.encode('<b>so</b>') +
+                ' <i>wow</i></div>'
         )
     }))
     hs.end('<div class="row"> <i>wow</i></div>')
