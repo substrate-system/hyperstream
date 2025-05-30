@@ -10,8 +10,8 @@ test('num', function (t) {
     t.plan(1)
 
     const hs = hyperstream({
-        '#a': 5,
-        '#b': 6,
+        '#a': '5',
+        '#b': '6',
         '#c': { n: 123 },
         '#c span': function (html) { return html.length }
     })

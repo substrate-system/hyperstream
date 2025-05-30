@@ -7,3 +7,5 @@ test/index.d.ts*
 dist
 .env
 
+.cursor
+.repomix-output.txt
