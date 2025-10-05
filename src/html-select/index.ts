@@ -1,30 +1,39 @@
 import through2, { type Transform, type TransformCallback } from 'through2'
 import Splicer from 'stream-splicer'
 import Match from './match.js'
+import Interface from './interface.js'
 import voidElements from 'void-elements'
 import { is as cssIs } from 'css-select'
 import type { EventEmitter } from 'events'
 
 const nextTick: (callback: (...args: any[]) => void) => void = typeof setImmediate !== 'undefined'
-    ? setImmediate : process.nextTick
+    ? setImmediate
+    : process.nextTick
 
 interface PlexOptions {
     objectMode: boolean
 }
 
 interface SelectorEntry {
-    test: (tree: any) => boolean
-    fn: (elem: any) => void
+    test: (tree: TreeNode) => boolean
+    fn: (elem: Interface) => void
+}
+
+interface TreeNode {
+    parent?: TreeNode
+    children?: TreeNode[]
+    row?: any
+    selfClosing?: boolean
 }
 
 class Plex extends Splicer {
-    _root: any
-    _current: any
-    _selectors: SelectorEntry[]
-    _lang: (sel: string) => (tree: any) => boolean
+    private _root: TreeNode
+    private _current: TreeNode
+    private _selectors: SelectorEntry[]
+    private readonly _lang: (sel: string) => (tree: TreeNode) => boolean
     get!: (index: number) => any // from Splicer
 
-    constructor (sel?: string, cb?: (elem: any) => void) {
+    constructor (sel?: string, cb?: (elem: Interface) => void) {
         const streams: any[] = [Plex._preFactory(), [], Plex._postFactory()]
         super(streams, { objectMode: true } as PlexOptions)
         this._root = {}
@@ -37,7 +46,7 @@ class Plex extends Splicer {
     static _preFactory () {
         return function (this: Plex): Transform {
             let pipeline: any
-            return through2.obj(function (this: Transform, row: any, enc: BufferEncoding, next: TransformCallback) {
+            return through2.obj(function (this: Transform, row: any, _enc: BufferEncoding, next: TransformCallback) {
                 const tree = this._updateTree(row)
                 if (!pipeline) pipeline = this.get(1)
                 let matched: any = null
@@ -56,7 +65,7 @@ class Plex extends Splicer {
                 if ((matched && tree.selfClosing) || row[0] === 'close') {
                     const s = pipeline.get(0)
                     if (s && s.finished && s.finished(tree)) {
-                        (s as unknown as EventEmitter).once('close', function () { nextTick(next) })
+                        (s as unknown as EventEmitter).once('close', () => { nextTick(next) })
                         this.push(['END', row])
                         return
                     }
@@ -69,21 +78,21 @@ class Plex extends Splicer {
 
     static _postFactory () {
         return function (): Transform {
-            return through2.obj(function (this: Transform, row: any, enc: BufferEncoding, next: TransformCallback) {
+            return through2.obj(function (this: Transform, row: any, _enc: BufferEncoding, next: TransformCallback) {
                 if (row[0] !== 'FIRST') this.push(row)
                 next()
             })
         }
     }
 
-    select (sel: string, cb: (elem: any) => void): this {
+    select (sel: string, cb: (elem: Interface) => void): this {
         this._selectors.push({ test: this._lang(sel), fn: cb })
         return this
     }
 
-    _updateTree (row: any): any {
+    _updateTree (row: any): TreeNode {
         if (row[0] === 'open') {
-            const node: any = { parent: this._current, row }
+            const node: TreeNode = { parent: this._current, row }
             node.selfClosing = node.parent && selfClosing(getTag(node))
             if (!this._current.children) this._current.children = [node]
             else this._current.children.push(node)
@@ -94,11 +103,11 @@ class Plex extends Splicer {
         return this._current
     }
 
-    _createMatch (tree: any, fn: (elem: any) => void): any {
+    _createMatch (tree: TreeNode, fn: (elem: Interface) => void): Match {
         const m = new Match(tree, fn)
         const pipeline = this.get(1)
         pipeline.splice(0, 0, m);
-        (m as unknown as EventEmitter).once('close', function () {
+        (m as unknown as EventEmitter).once('close', () => {
             const ix = pipeline.indexOf(m)
             if (ix >= 0) pipeline.splice(ix, 1)
             const next = pipeline.get(ix)
@@ -110,21 +119,21 @@ class Plex extends Splicer {
     }
 }
 
-function getTag (node: any) {
-    const buf = node.row[1]
+function getTag (node: TreeNode): string {
+    const buf = node.row?.[1]
     const str = Buffer.isBuffer(buf) ? buf.toString('utf8') : String(buf)
     const match = str.match(/^<\/?([\w-]+)/)
     return match ? match[1].toLowerCase() : ''
 }
 
-function selfClosing (tag: string) {
+function selfClosing (tag: string): boolean {
     return !!voidElements[tag]
 }
 
-function lang () {
-    return (selector: string) => (node: any) => {
+function lang (): (selector: string) => (node: TreeNode) => boolean {
+    return (selector: string) => (node: TreeNode) => {
         const tag = getTag(node)
-        const fakeElem = { type: 'tag', name: tag, attribs: node.attributes || {} }
+        const fakeElem = { type: 'tag', name: tag, attribs: (node as any).attributes || {} }
         return cssIs(fakeElem, selector)
     }
 }

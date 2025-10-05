@@ -1,1 +1,1 @@
-declare module 'hyperquest'; 
+declare module 'hyperquest';
