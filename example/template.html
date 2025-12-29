@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        nav { background: #f0f0f0; padding: 10px; margin-bottom: 20px; }
+        .hero { background: #e0e0ff; padding: 40px; text-align: center; margin-bottom: 20px; }
+        .hero h1 { margin: 0 0 10px 0; }
+        .hero p { margin: 0; color: #666; }
+        .content { margin-bottom: 20px; }
+        .sidebar { background: #fff8e0; padding: 15px; margin-bottom: 20px; }
+        .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; }
+        .card-title { font-weight: bold; margin-bottom: 5px; }
+        footer { background: #333; color: white; padding: 20px; text-align: center; }
+        .stats { display: flex; gap: 20px; justify-content: center; margin: 20px 0; }
+        .stat { text-align: center; }
+        .stat-value { font-size: 2em; font-weight: bold; }
+        .metadata { font-size: 0.8em; color: #999; }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected from external file -->
+    <nav id="main-nav"></nav>
+
+    <!-- Hero section with dynamic content -->
+    <div class="hero">
+        <h1 id="page-title">Default Title</h1>
+        <p id="subtitle">Default subtitle text</p>
+    </div>
+
+    <!-- Stats section demonstrating numeric values -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-value" id="user-count">0</div>
+            <div>Users</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="download-count">0</div>
+            <div>Downloads</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="star-count">0</div>
+            <div>Stars</div>
+        </div>
+    </div>
+
+    <!-- Main content area -->
+    <main class="content">
+        <h2>Features</h2>
+        <div id="features-list"></div>
+
+        <h2>Cards</h2>
+        <div class="card" id="card-1">
+            <div class="card-title">Card Title</div>
+            <div class="card-body">Card body content</div>
+        </div>
+
+        <div class="card" id="card-2">
+            <div class="card-title">Another Card</div>
+            <div class="card-body">More content here</div>
+        </div>
+    </main>
+
+    <!-- Sidebar with append/prepend demos -->
+    <aside class="sidebar">
+        <h3>Sidebar</h3>
+        <p id="sidebar-content">Original sidebar content.</p>
+    </aside>
+
+    <!-- Dynamic link with attribute modification -->
+    <p>
+        Visit our <a id="main-link" href="#">website</a> for more info.
+    </p>
+
+    <!-- Element with class modification -->
+    <div id="dynamic-box" class="box">
+        This box has dynamic classes.
+    </div>
+
+    <!-- Metadata section -->
+    <div class="metadata">
+        <span id="build-time">Build time: unknown</span> |
+        <span id="version">Version: 0.0.0</span>
+    </div>
+
+    <!-- Footer injected from external file -->
+    <footer id="main-footer"></footer>
+</body>
+</html>

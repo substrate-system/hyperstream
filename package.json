@@ -17,6 +17,7 @@
   "scripts": {
     "lint": "eslint \"./**/*.{ts,js}\"",
     "test": "cd test && esbuild --format=esm --bundle --platform=node --packages=external index.ts | node --input-type=module",
+    "example": "cd example && esbuild --format=esm --bundle --platform=node --packages=external index.ts | node --input-type=module",
     "build-esm": "esbuild src/**/*.ts --format=esm --metafile=dist/meta.json --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --outbase=src --sourcemap && tsc --emitDeclarationOnly --project tsconfig.build.json --outDir dist",
     "build": "mkdir -p ./dist && rm -rf ./dist/* && npm run build-esm",
     "preversion": "npm run lint",
