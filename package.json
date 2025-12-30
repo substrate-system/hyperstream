@@ -20,6 +20,7 @@
     "example": "cd example && esbuild --format=esm --bundle --platform=node --packages=external index.ts | node --input-type=module",
     "build-esm": "esbuild src/**/*.ts --format=esm --metafile=dist/meta.json --keep-names --tsconfig=tsconfig.build.json --outdir=./dist --outbase=src --sourcemap && tsc --emitDeclarationOnly --project tsconfig.build.json --outDir dist",
     "build": "mkdir -p ./dist && rm -rf ./dist/* && npm run build-esm",
+    "toc": "markdown-toc --maxdepth 3 -i README.md",
     "preversion": "npm run lint",
     "version": "auto-changelog -p --template keepachangelog --breaking-pattern 'BREAKING CHANGE:' && git add CHANGELOG.md",
     "postversion": "git push --follow-tags && npm publish",
@@ -46,6 +47,7 @@
     "esbuild": "^0.25.12",
     "eslint": "^8.57.0",
     "eslint-config-standard": "^17.1.0",
+    "markdown-toc": "^1.2.0",
     "tap-spec": "^5.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.8.2"

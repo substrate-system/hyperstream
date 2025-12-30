@@ -16,7 +16,25 @@ A re-implementation of the classic
 for compatibility with browsers, Cloudflare Workers, Deno, and other runtimes.
 
 <details><summary><h2>Contents</h2></summary>
+
 <!-- toc -->
+
+- [Install](#install)
+- [Example](#example)
+  * [Strings](#strings)
+  * [TransformStream API](#transformstream-api)
+  * [Streams](#streams)
+  * [Attribute manipulation](#attribute-manipulation)
+  * [Transform functions](#transform-functions)
+- [API](#api)
+  * [`hyperstream(config)`](#hyperstreamconfig)
+  * [`hyperstreamFromString(html, config)`](#hyperstreamfromstringhtml-config)
+  * [`createHyperstream(config)`](#createhyperstreamconfig)
+  * [`processHyperstream(input, config)`](#processhyperstreaminput-config)
+- [Configuration](#configuration)
+
+<!-- tocstop -->
+
 </details>
 
 ## Install
@@ -37,7 +55,12 @@ Process HTML with string replacements:
 import { hyperstreamFromString } from '@substrate-system/hyperstream'
 
 const result = await hyperstreamFromString(
-    '<html><head><title id="title"></title></head><body><div class="content"></div></body></html>',
+    `<html>
+        <head><title id="title"></title></head>
+        <body>
+            <div class="content"></div>
+        </body>
+    </html>`,
     {
         '#title': 'Hello World',
         '.content': { _html: '<p>This is the content</p>' }
