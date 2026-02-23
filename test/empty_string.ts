@@ -7,7 +7,7 @@ const encoder = new TextEncoder()
 
 test('queue an empty string', async function (t) {
     // Create a stream that emits: 'xy', '', 'z' with delays
-    async function * chunks (): AsyncGenerator<Uint8Array> {
+    async function * chunks ():AsyncGenerator<Uint8Array> {
         await new Promise(resolve => setTimeout(resolve, 25))
         yield encoder.encode('xy')
         await new Promise(resolve => setTimeout(resolve, 25))

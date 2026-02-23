@@ -6,8 +6,8 @@ import { createTokenizer, type Token } from './tokenize.js'
 import { encode as entEncode } from './ent/index.js'
 
 type StreamValue = ReadableStream<Uint8Array>
-type TransformFn = (html: string) => string
-type AttrModifier = { append?: string; prepend?: string }
+type TransformFn = (html:string) => string
+type AttrModifier = { append?:string; prepend?:string }
 
 type PropertyValue =
     | string
@@ -26,23 +26,23 @@ type SelectorValue =
     | Record<string, PropertyValue>
 
 interface HyperstreamConfig {
-    [selector: string]: SelectorValue
+    [selector:string]:SelectorValue
 }
 
 interface MatchedElement {
-    selector: string
-    value: SelectorValue
-    depth: number
-    openTag: Uint8Array
-    content: Array<Uint8Array | Promise<Uint8Array>>
-    closeTag: Uint8Array | null
-    firstOnly: boolean
+    selector:string
+    value:SelectorValue
+    depth:number
+    openTag:Uint8Array
+    content:Array<Uint8Array|Promise<Uint8Array>>
+    closeTag:Uint8Array|null
+    firstOnly:boolean
 }
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
-function concatUint8Arrays (arrays: Uint8Array[]): Uint8Array {
+function concatUint8Arrays (arrays:Uint8Array[]):Uint8Array {
     const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
     const result = new Uint8Array(totalLength)
     let offset = 0
@@ -53,7 +53,7 @@ function concatUint8Arrays (arrays: Uint8Array[]): Uint8Array {
     return result
 }
 
-function isStream (s: unknown): s is StreamValue {
+function isStream (s:unknown):s is StreamValue {
     return (
         s !== null &&
         typeof s === 'object' &&
@@ -61,7 +61,7 @@ function isStream (s: unknown): s is StreamValue {
     )
 }
 
-function isObj (o: unknown): o is Record<string, unknown> {
+function isObj (o:unknown):o is Record<string, unknown> {
     return (
         typeof o === 'object' &&
         o !== null &&
@@ -70,23 +70,23 @@ function isObj (o: unknown): o is Record<string, unknown> {
     )
 }
 
-function toStr (s: unknown): string {
+function toStr (s:unknown):string {
     if (s instanceof Uint8Array) return decoder.decode(s)
     if (typeof s === 'string') return s
     return String(s)
 }
 
-function toBytes (s: unknown): Uint8Array {
+function toBytes (s:unknown):Uint8Array {
     if (s instanceof Uint8Array) return s
     if (typeof s === 'string') return encoder.encode(s)
     return encoder.encode(String(s))
 }
 
-function parseTagAttrs (tag: Uint8Array): Record<string, string> {
+function parseTagAttrs (tag:Uint8Array):Record<string, string> {
     const tagStr = decoder.decode(tag)
-    const attrs: Record<string, string> = {}
+    const attrs:Record<string, string> = {}
     const attrRegex = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g
-    let match: RegExpExecArray | null
+    let match:RegExpExecArray|null
 
     const tagMatch = tagStr.match(/^<\/?([a-zA-Z][-a-zA-Z0-9]*)/)
     const startIndex = tagMatch ? tagMatch[0].length : 1
@@ -102,9 +102,9 @@ function parseTagAttrs (tag: Uint8Array): Record<string, string> {
 }
 
 function rebuildTag (
-    tag: Uint8Array,
-    attrChanges: Record<string, string | null>
-): Uint8Array {
+    tag:Uint8Array,
+    attrChanges:Record<string, string|null>
+):Uint8Array {
     const tagStr = decoder.decode(tag)
     const tagMatch = tagStr.match(/^<([a-zA-Z][-a-zA-Z0-9]*)/)
     if (!tagMatch) return tag
@@ -130,13 +130,13 @@ function rebuildTag (
     return encoder.encode(result)
 }
 
-function getTagName (tag: Uint8Array): string {
+function getTagName (tag:Uint8Array):string {
     const tagStr = decoder.decode(tag)
     const match = tagStr.match(/^<\/?([a-zA-Z][-a-zA-Z0-9]*)/)
     return match ? match[1].toLowerCase() : ''
 }
 
-function isSelfClosing (tag: Uint8Array): boolean {
+function isSelfClosing (tag:Uint8Array):boolean {
     const tagStr = decoder.decode(tag).trim()
     return tagStr.endsWith('/>') || isVoidElement(getTagName(tag))
 }
@@ -146,15 +146,15 @@ const VOID_ELEMENTS = new Set([
     'link', 'meta', 'param', 'source', 'track', 'wbr'
 ])
 
-function isVoidElement (tagName: string): boolean {
+function isVoidElement (tagName:string):boolean {
     return VOID_ELEMENTS.has(tagName.toLowerCase())
 }
 
 function matchesSelector (
-    tag: Uint8Array,
-    selector: string,
-    ancestors: Uint8Array[]
-): boolean {
+    tag:Uint8Array,
+    selector:string,
+    ancestors:Uint8Array[]
+):boolean {
     const tagName = getTagName(tag)
     const attrs = parseTagAttrs(tag)
 
@@ -193,24 +193,24 @@ function matchesSelector (
     }
 }
 
-async function streamToUint8Array (stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+async function streamToUint8Array (stream:ReadableStream<Uint8Array>):Promise<Uint8Array> {
     const chunks = await S(stream).toArray()
     return concatUint8Arrays(chunks)
 }
 
 interface HyperstreamState {
-    selectors: Array<{
-        selector: string
-        value: SelectorValue
-        firstOnly: boolean
-        matchedOnce: boolean
+    selectors:Array<{
+        selector:string
+        value:SelectorValue
+        firstOnly:boolean
+        matchedOnce:boolean
     }>
-    ancestors: Uint8Array[]
-    activeMatches: MatchedElement[]
-    depth: number
+    ancestors:Uint8Array[]
+    activeMatches:MatchedElement[]
+    depth:number
 }
 
-function createState (config: HyperstreamConfig): HyperstreamState {
+function createState (config:HyperstreamConfig):HyperstreamState {
     return {
         selectors: Object.keys(config).map(key => {
             const firstOnly = /:first$/.test(key)
@@ -228,14 +228,13 @@ function createState (config: HyperstreamConfig): HyperstreamState {
 }
 
 function buildOutput (
-    openTag: Uint8Array,
-    content: Uint8Array,
-    closeTag: Uint8Array | null,
-    attrChanges: Record<string, string | null>
-): Uint8Array {
+    openTag:Uint8Array,
+    content:Uint8Array,
+    closeTag:Uint8Array|null,
+    attrChanges:Record<string, string|null>
+):Uint8Array {
     const modifiedTag = Object.keys(attrChanges).length > 0
-        ? rebuildTag(openTag, attrChanges)
-        : openTag
+        ? rebuildTag(openTag, attrChanges) : openTag
 
     const parts = [modifiedTag, content]
     if (closeTag) parts.push(closeTag)
@@ -243,14 +242,14 @@ function buildOutput (
 }
 
 async function processObjectValue (
-    openTag: Uint8Array,
-    originalContent: Uint8Array,
-    closeTag: Uint8Array | null,
-    props: Record<string, PropertyValue>
-): Promise<Uint8Array> {
-    let newContent: Uint8Array | null = null
-    let pendingContent: Promise<Uint8Array> | null = null
-    const attrChanges: Record<string, string | null> = {}
+    openTag:Uint8Array,
+    originalContent:Uint8Array,
+    closeTag:Uint8Array|null,
+    props:Record<string, PropertyValue>
+):Promise<Uint8Array> {
+    let newContent:Uint8Array|null = null
+    let pendingContent:Promise<Uint8Array>|null = null
+    const attrChanges:Record<string, string|null> = {}
 
     for (const [prop, v] of Object.entries(props)) {
         const lprop = prop.toLowerCase()
@@ -327,11 +326,11 @@ async function processObjectValue (
 }
 
 async function transformContent (
-    value: SelectorValue,
-    openTag: Uint8Array,
-    originalContent: Uint8Array,
-    closeTag: Uint8Array | null
-): Promise<Uint8Array> {
+    value:SelectorValue,
+    openTag:Uint8Array,
+    originalContent:Uint8Array,
+    closeTag:Uint8Array|null
+):Promise<Uint8Array> {
     if (typeof value === 'string') {
         return buildOutput(openTag, encoder.encode(value), closeTag, {})
     } else if (typeof value === 'number') {
@@ -353,16 +352,16 @@ async function transformContent (
     }
 }
 
-async function resolveContent (content: Array<Uint8Array | Promise<Uint8Array>>): Promise<Uint8Array> {
+async function resolveContent (content:Array<Uint8Array|Promise<Uint8Array>>):Promise<Uint8Array> {
     const resolved = await Promise.all(content)
     return concatUint8Arrays(resolved)
 }
 
-async function processMatch (match: MatchedElement): Promise<Uint8Array> {
+async function processMatch (match:MatchedElement):Promise<Uint8Array> {
     const { value, openTag, content, closeTag } = match
     const hasPromises = content.some(c => c instanceof Promise)
 
-    let originalContent: Uint8Array
+    let originalContent:Uint8Array
     if (hasPromises) {
         originalContent = await resolveContent(content)
     } else {
@@ -376,16 +375,16 @@ async function processMatch (match: MatchedElement): Promise<Uint8Array> {
  * Process HTML through hyperstream asynchronously
  */
 export async function processHyperstream (
-    input: ReadableStream<Uint8Array>,
-    config: HyperstreamConfig = {}
-): Promise<Uint8Array> {
+    input:ReadableStream<Uint8Array>,
+    config:HyperstreamConfig = {}
+):Promise<Uint8Array> {
     const state = createState(config)
-    const outputQueue: Array<Uint8Array | Promise<Uint8Array>> = []
+    const outputQueue:Array<Uint8Array|Promise<Uint8Array>> = []
 
     function queueOutput (
-        data: Uint8Array | Promise<Uint8Array>,
-        activeMatches: MatchedElement[]
-    ): void {
+        data:Uint8Array|Promise<Uint8Array>,
+        activeMatches:MatchedElement[]
+    ):void {
         if (activeMatches.length > 0) {
             const parent = activeMatches[activeMatches.length - 1]
             parent.content.push(data)
@@ -394,7 +393,7 @@ export async function processHyperstream (
         }
     }
 
-    function handleOpenTag (tag: Uint8Array): void {
+    function handleOpenTag (tag:Uint8Array):void {
         const selfClosing = isSelfClosing(tag)
 
         for (const sel of state.selectors) {
@@ -404,7 +403,7 @@ export async function processHyperstream (
             if (matchesSelector(tag, sel.selector, state.ancestors)) {
                 sel.matchedOnce = true
 
-                const match: MatchedElement = {
+                const match:MatchedElement = {
                     selector: sel.selector,
                     value: sel.value,
                     depth: state.depth,
@@ -433,7 +432,7 @@ export async function processHyperstream (
         }
     }
 
-    function handleCloseTag (tag: Uint8Array): void {
+    function handleCloseTag (tag:Uint8Array):void {
         state.depth--
         if (state.ancestors.length > 0) {
             state.ancestors.pop()
@@ -452,7 +451,7 @@ export async function processHyperstream (
         queueOutput(tag, state.activeMatches)
     }
 
-    function processToken (token: Token): void {
+    function processToken (token:Token):void {
         const [type, data] = token
         if (type === 'open') {
             handleOpenTag(data)
@@ -469,7 +468,7 @@ export async function processHyperstream (
     await S(tokenStream).forEach(processToken).toArray()
 
     // Resolve all queued output
-    const resolvedOutput: Uint8Array[] = []
+    const resolvedOutput:Uint8Array[] = []
     for (const item of outputQueue) {
         if (item instanceof Promise) {
             resolvedOutput.push(await item)
@@ -484,8 +483,8 @@ export async function processHyperstream (
 /**
  * Create a hyperstream TransformStream
  */
-export function createHyperstream (config: HyperstreamConfig = {}): TransformStream<Uint8Array, Uint8Array> {
-    const chunks: Uint8Array[] = []
+export function createHyperstream (config:HyperstreamConfig = {}):TransformStream<Uint8Array, Uint8Array> {
+    const chunks:Uint8Array[] = []
 
     return new TransformStream<Uint8Array, Uint8Array>({
         transform (chunk) {
@@ -506,11 +505,11 @@ export function createHyperstream (config: HyperstreamConfig = {}): TransformStr
  * Hyperstream class - provides a TransformStream interface
  */
 export class Hyperstream {
-    readonly transform: TransformStream<Uint8Array, Uint8Array>
-    readonly readable: ReadableStream<Uint8Array>
-    readonly writable: WritableStream<Uint8Array>
+    readonly transform:TransformStream<Uint8Array, Uint8Array>
+    readonly readable:ReadableStream<Uint8Array>
+    readonly writable:WritableStream<Uint8Array>
 
-    constructor (config: HyperstreamConfig = {}) {
+    constructor (config:HyperstreamConfig = {}) {
         this.transform = createHyperstream(config)
         this.readable = this.transform.readable
         this.writable = this.transform.writable
@@ -521,9 +520,9 @@ export class Hyperstream {
  * Create a hyperstream from a string (convenience function)
  */
 export async function hyperstreamFromString (
-    html: string,
-    config: HyperstreamConfig = {}
-): Promise<string> {
+    html:string,
+    config:HyperstreamConfig = {}
+):Promise<string> {
     const hs = createHyperstream(config)
     const inputBytes = encoder.encode(html)
     const output = S.from([inputBytes]).toStream().pipeThrough(hs)
@@ -534,6 +533,6 @@ export async function hyperstreamFromString (
 /**
  * Default export - create a hyperstream instance
  */
-export default function hyperstream (config?: HyperstreamConfig): Hyperstream {
+export default function hyperstream (config?:HyperstreamConfig):Hyperstream {
     return new Hyperstream(config)
 }

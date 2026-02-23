@@ -7,14 +7,14 @@ const decoder = new TextDecoder()
 /**
  * Convert a string to a ReadableStream of bytes
  */
-export function stringToStream (str: string): ReadableStream<Uint8Array> {
+export function stringToStream (str:string):ReadableStream<Uint8Array> {
     return S.from([encoder.encode(str)]).toStream()
 }
 
 /**
  * Read a file and return a web ReadableStream
  */
-export function fileToStream (filepath: string): ReadableStream<Uint8Array> {
+export function fileToStream (filepath:string):ReadableStream<Uint8Array> {
     const content = fs.readFileSync(filepath)
     return S.from([new Uint8Array(content)]).toStream()
 }
@@ -22,7 +22,7 @@ export function fileToStream (filepath: string): ReadableStream<Uint8Array> {
 /**
  * Consume a ReadableStream and return the data as a string
  */
-export async function streamToString (stream: ReadableStream<Uint8Array>): Promise<string> {
+export async function streamToString (stream:ReadableStream<Uint8Array>):Promise<string> {
     const chunks = await S(stream).toArray()
     const totalLength = chunks.reduce((sum, arr) => sum + arr.length, 0)
     const result = new Uint8Array(totalLength)
@@ -38,9 +38,9 @@ export async function streamToString (stream: ReadableStream<Uint8Array>): Promi
  * Run html through hyperstream and return the result as a string
  */
 export async function processHtml (
-    hs: { transform: TransformStream<Uint8Array, Uint8Array> },
-    html: string
-): Promise<string> {
+    hs:{ transform:TransformStream<Uint8Array, Uint8Array> },
+    html:string
+):Promise<string> {
     const input = stringToStream(html)
     const output = input.pipeThrough(hs.transform)
     return streamToString(output)
@@ -50,9 +50,9 @@ export async function processHtml (
  * Run a file through hyperstream and return the result as a string
  */
 export async function processFile (
-    hs: { transform: TransformStream<Uint8Array, Uint8Array> },
-    filepath: string
-): Promise<string> {
+    hs:{ transform:TransformStream<Uint8Array, Uint8Array> },
+    filepath:string
+):Promise<string> {
     const input = fileToStream(filepath)
     const output = input.pipeThrough(hs.transform)
     return streamToString(output)
@@ -61,8 +61,8 @@ export async function processFile (
 /**
  * Create a delayed stream that emits characters one by one with a delay
  */
-export function createDelayedStream (chars: string, delayMs: number): ReadableStream<Uint8Array> {
-    async function * delayedChars (): AsyncGenerator<Uint8Array> {
+export function createDelayedStream (chars:string, delayMs:number):ReadableStream<Uint8Array> {
+    async function * delayedChars ():AsyncGenerator<Uint8Array> {
         for (const char of chars) {
             await new Promise(resolve => setTimeout(resolve, delayMs))
             yield encoder.encode(char)
@@ -75,6 +75,6 @@ export function createDelayedStream (chars: string, delayMs: number): ReadableSt
 /**
  * Create an A-Z stream (letters a-z with delays)
  */
-export function createAzStream (delayMs = 25): ReadableStream<Uint8Array> {
+export function createAzStream (delayMs = 25):ReadableStream<Uint8Array> {
     return createDelayedStream('abcdefghijklmnopqrstuvwxyz', delayMs)
 }

@@ -24,20 +24,20 @@ const states = {
     AttributeValueState: 4
 }
 
-export type Token = ['open' | 'close' | 'text', Uint8Array]
+export type Token = ['open'|'close'|'text', Uint8Array]
 
 interface TokenizerState {
-    state: string
-    tagState: number | null
-    quoteState: string | null
-    raw: Uint8Array | null
-    buffers: Uint8Array[]
-    last: number[]
-    prev: Uint8Array | null
-    offset: number
+    state:string
+    tagState:number|null
+    quoteState:string|null
+    raw:Uint8Array|null
+    buffers:Uint8Array[]
+    last:number[]
+    prev:Uint8Array|null
+    offset:number
 }
 
-function concatUint8Arrays (arrays: Uint8Array[]): Uint8Array {
+function concatUint8Arrays (arrays:Uint8Array[]):Uint8Array {
     const totalLength = arrays.reduce((sum, arr) => sum + arr.length, 0)
     const result = new Uint8Array(totalLength)
     let offset = 0
@@ -48,7 +48,7 @@ function concatUint8Arrays (arrays: Uint8Array[]): Uint8Array {
     return result
 }
 
-function getChar (buffers: Uint8Array[], i: number): number | undefined {
+function getChar (buffers:Uint8Array[], i:number):number|undefined {
     let offset = 0
     for (const buf of buffers) {
         if (offset + buf.length > i) {
@@ -58,7 +58,7 @@ function getChar (buffers: Uint8Array[], i: number): number | undefined {
     }
 }
 
-function getTag (buffers: Uint8Array[]): string {
+function getTag (buffers:Uint8Array[]):string {
     let tag = ''
     for (const buf of buffers) {
         for (let k = 0; k < buf.length; k++) {
@@ -73,7 +73,7 @@ function getTag (buffers: Uint8Array[]): string {
     return tag.toLowerCase()
 }
 
-function compare (a: number[], b: Uint8Array | null): boolean {
+function compare (a:number[], b:Uint8Array|null):boolean {
     if (!b || a.length < b.length) return false
     for (let i = a.length - 1, j = b.length - 1; j >= 0; i--, j--) {
         if (lower(a[i]) !== lower(b[j])) return false
@@ -81,20 +81,20 @@ function compare (a: number[], b: Uint8Array | null): boolean {
     return true
 }
 
-function lower (n: number): number {
+function lower (n:number):number {
     return n >= 65 && n <= 90 ? n + 32 : n
 }
 
-function isWhiteSpace (b: number): boolean {
+function isWhiteSpace (b:number):boolean {
     return b === 0x20 || b === 0x09 || b === 0x0A || b === 0x0C || b === 0x0D
 }
 
 function testRaw (
-    st: TokenizerState,
-    buf: Uint8Array,
-    offset: number,
-    index: number
-): [Uint8Array, Uint8Array] | undefined {
+    st:TokenizerState,
+    buf:Uint8Array,
+    offset:number,
+    index:number
+):[Uint8Array, Uint8Array]|undefined {
     if (!compare(st.last, st.raw)) return
 
     st.buffers.push(buf.slice(offset, index + 1))
@@ -104,10 +104,10 @@ function testRaw (
 }
 
 function pushState (
-    st: TokenizerState,
-    ev: 'open' | 'close' | 'text',
-    controller: TransformStreamDefaultController<Token>
-): void {
+    st:TokenizerState,
+    ev:'open'|'close'|'text',
+    controller:TransformStreamDefaultController<Token>
+):void {
     if (st.buffers.length === 0) return
     const buf = concatUint8Arrays(st.buffers)
     st.buffers = []
@@ -115,10 +115,10 @@ function pushState (
 }
 
 function processChunk (
-    st: TokenizerState,
-    chunk: Uint8Array,
-    controller: TransformStreamDefaultController<Token>
-): void {
+    st:TokenizerState,
+    chunk:Uint8Array,
+    controller:TransformStreamDefaultController<Token>
+):void {
     let buf = chunk
     let i = 0
     let offset = 0
@@ -199,8 +199,8 @@ function processChunk (
 /**
  * Create a tokenizer TransformStream for HTML
  */
-export function createTokenizer (): TransformStream<Uint8Array, Token> {
-    const st: TokenizerState = {
+export function createTokenizer ():TransformStream<Uint8Array, Token> {
+    const st:TokenizerState = {
         state: 'text',
         tagState: null,
         quoteState: null,
@@ -227,9 +227,9 @@ export function createTokenizer (): TransformStream<Uint8Array, Token> {
  * Legacy class wrapper for compatibility
  */
 export class Tokenize {
-    private stream: TransformStream<Uint8Array, Token>
-    readonly readable: ReadableStream<Token>
-    readonly writable: WritableStream<Uint8Array>
+    private stream:TransformStream<Uint8Array, Token>
+    readonly readable:ReadableStream<Token>
+    readonly writable:WritableStream<Uint8Array>
 
     constructor () {
         this.stream = createTokenizer()

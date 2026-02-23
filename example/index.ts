@@ -25,7 +25,7 @@ const __dirname = dirname(__filename)
 /**
  * Convert a string to a Web ReadableStream
  */
-function stringToStream (str: string): ReadableStream<Uint8Array> {
+function stringToStream (str:string):ReadableStream<Uint8Array> {
     const encoder = new TextEncoder()
     return S.from([encoder.encode(str)]).toStream()
 }
@@ -33,7 +33,7 @@ function stringToStream (str: string): ReadableStream<Uint8Array> {
 /**
  * Read a file as a Web ReadableStream
  */
-function fileToStream (filepath: string): ReadableStream<Uint8Array> {
+function fileToStream (filepath:string):ReadableStream<Uint8Array> {
     const content = fs.readFileSync(filepath)
     return S.from([new Uint8Array(content)]).toStream()
 }
@@ -135,11 +135,11 @@ async function main () {
         // 10. TRANSFORM FUNCTIONS
         // Apply a function to transform existing content
         // ─────────────────────────────────────────────────────────────
-        '#build-time': (content: string) => {
+        '#build-time': (content:string) => {
             return content.replace('unknown', buildTime)
         },
 
-        '#version': (content: string) => {
+        '#version': (content:string) => {
             return content.replace('0.0.0', '1.0.0-example')
         },
 
