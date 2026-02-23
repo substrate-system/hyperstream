@@ -16,7 +16,7 @@
  */
 
 import { createReadStream } from 'node:fs'
-import { Readable } from 'node:stream'
+import { type Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { processHyperstream } from '../src/index.js'
