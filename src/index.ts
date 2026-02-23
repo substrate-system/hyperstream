@@ -1,6 +1,7 @@
 import { selectAll } from 'css-select'
 import { parseDocument } from 'htmlparser2'
 import type { Element } from 'domhandler'
+import { S } from '@substrate-system/stream'
 import { createTokenizer, type Token } from './tokenize.js'
 import { encode as entEncode } from './ent/index.js'
 
@@ -193,13 +194,7 @@ function matchesSelector (
 }
 
 async function streamToUint8Array (stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
-    const reader = stream.getReader()
-    const chunks: Uint8Array[] = []
-    while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-    }
+    const chunks = await S(stream).toArray()
     return concatUint8Arrays(chunks)
 }
 
@@ -471,14 +466,7 @@ export async function processHyperstream (
     // Process the input through tokenizer
     const tokenizer = createTokenizer()
     const tokenStream = input.pipeThrough(tokenizer)
-    const reader = tokenStream.getReader()
-
-    // Read and process all tokens
-    while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        processToken(value)
-    }
+    await S(tokenStream).forEach(processToken).toArray()
 
     // Resolve all queued output
     const resolvedOutput: Uint8Array[] = []
@@ -506,14 +494,7 @@ export function createHyperstream (config: HyperstreamConfig = {}): TransformStr
         },
         async flush (controller) {
             // Process all buffered input at once
-            const input = new ReadableStream({
-                start (ctrl) {
-                    for (const chunk of chunks) {
-                        ctrl.enqueue(chunk)
-                    }
-                    ctrl.close()
-                }
-            })
+            const input = S.from(chunks).toStream()
 
             const result = await processHyperstream(input, config)
             controller.enqueue(result)
@@ -545,21 +526,8 @@ export async function hyperstreamFromString (
 ): Promise<string> {
     const hs = createHyperstream(config)
     const inputBytes = encoder.encode(html)
-
-    const reader = new ReadableStream({
-        start (controller) {
-            controller.enqueue(inputBytes)
-            controller.close()
-        }
-    }).pipeThrough(hs).getReader()
-
-    const chunks: Uint8Array[] = []
-    while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-    }
-
+    const output = S.from([inputBytes]).toStream().pipeThrough(hs)
+    const chunks = await S(output).toArray()
     return decoder.decode(concatUint8Arrays(chunks))
 }
 

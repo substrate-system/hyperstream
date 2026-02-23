@@ -1,6 +1,5 @@
 import fs from 'node:fs'
-import path from 'node:path'
-import { Readable } from 'node:stream'
+import { S } from '@substrate-system/stream'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -9,12 +8,7 @@ const decoder = new TextDecoder()
  * Convert a string to a ReadableStream of bytes
  */
 export function stringToStream (str: string): ReadableStream<Uint8Array> {
-    return new ReadableStream({
-        start (controller) {
-            controller.enqueue(encoder.encode(str))
-            controller.close()
-        }
-    })
+    return S.from([encoder.encode(str)]).toStream()
 }
 
 /**
@@ -22,27 +16,14 @@ export function stringToStream (str: string): ReadableStream<Uint8Array> {
  */
 export function fileToStream (filepath: string): ReadableStream<Uint8Array> {
     const content = fs.readFileSync(filepath)
-    return new ReadableStream({
-        start (controller) {
-            controller.enqueue(new Uint8Array(content))
-            controller.close()
-        }
-    })
+    return S.from([new Uint8Array(content)]).toStream()
 }
 
 /**
  * Consume a ReadableStream and return the data as a string
  */
 export async function streamToString (stream: ReadableStream<Uint8Array>): Promise<string> {
-    const reader = stream.getReader()
-    const chunks: Uint8Array[] = []
-
-    while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-    }
-
+    const chunks = await S(stream).toArray()
     const totalLength = chunks.reduce((sum, arr) => sum + arr.length, 0)
     const result = new Uint8Array(totalLength)
     let offset = 0
@@ -50,7 +31,6 @@ export async function streamToString (stream: ReadableStream<Uint8Array>): Promi
         result.set(chunk, offset)
         offset += chunk.length
     }
-
     return decoder.decode(result)
 }
 
@@ -82,18 +62,14 @@ export async function processFile (
  * Create a delayed stream that emits characters one by one with a delay
  */
 export function createDelayedStream (chars: string, delayMs: number): ReadableStream<Uint8Array> {
-    let index = 0
-    return new ReadableStream({
-        async pull (controller) {
-            if (index < chars.length) {
-                await new Promise(resolve => setTimeout(resolve, delayMs))
-                controller.enqueue(encoder.encode(chars[index]))
-                index++
-            } else {
-                controller.close()
-            }
+    async function * delayedChars (): AsyncGenerator<Uint8Array> {
+        for (const char of chars) {
+            await new Promise(resolve => setTimeout(resolve, delayMs))
+            yield encoder.encode(char)
         }
-    })
+    }
+
+    return S.from(delayedChars()).toStream()
 }
 
 /**

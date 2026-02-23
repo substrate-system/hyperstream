@@ -1,7 +1,5 @@
 /**
- * Hyperstream Comprehensive Example
- *
- * This example demonstrates all transformation methods available in hyperstream:
+ * This example demonstrates all transformation methods in hyperstream:
  * - String replacement
  * - Numeric replacement
  * - HTML replacement via _html
@@ -15,55 +13,29 @@
  * - First-only matching with :first suffix
  */
 
-import { createReadStream } from 'node:fs'
-import { type Readable } from 'node:stream'
+import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { S } from '@substrate-system/stream'
 import { processHyperstream } from '../src/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 /**
- * Convert a Node.js Readable stream to a Web ReadableStream
- */
-function nodeToWebStream (nodeStream: Readable): ReadableStream<Uint8Array> {
-    return new ReadableStream({
-        start (controller) {
-            nodeStream.on('data', (chunk: Buffer) => {
-                controller.enqueue(new Uint8Array(chunk))
-            })
-            nodeStream.on('end', () => {
-                controller.close()
-            })
-            nodeStream.on('error', (err) => {
-                controller.error(err)
-            })
-        },
-        cancel () {
-            nodeStream.destroy()
-        }
-    })
-}
-
-/**
  * Convert a string to a Web ReadableStream
  */
 function stringToStream (str: string): ReadableStream<Uint8Array> {
     const encoder = new TextEncoder()
-    return new ReadableStream({
-        start (controller) {
-            controller.enqueue(encoder.encode(str))
-            controller.close()
-        }
-    })
+    return S.from([encoder.encode(str)]).toStream()
 }
 
 /**
  * Read a file as a Web ReadableStream
  */
 function fileToStream (filepath: string): ReadableStream<Uint8Array> {
-    return nodeToWebStream(createReadStream(filepath))
+    const content = fs.readFileSync(filepath)
+    return S.from([new Uint8Array(content)]).toStream()
 }
 
 async function main () {
@@ -94,7 +66,7 @@ async function main () {
         // ─────────────────────────────────────────────────────────────
         '#page-title': 'Welcome to Hyperstream',
         '#subtitle': 'Transform HTML streams with CSS selectors',
-        'title': 'Hyperstream Demo | Stream HTML Transformations',
+        title: 'Hyperstream Demo | Stream HTML Transformations',
 
         // ─────────────────────────────────────────────────────────────
         // 3. NUMERIC REPLACEMENT

@@ -86,6 +86,7 @@ Use the `TransformStream` interface for streaming processing:
 
 ```ts
 import hyperstream from '@substrate-system/hyperstream'
+import { S } from '@substrate-system/stream'
 
 const hs = hyperstream({
     '#title': 'Hello World',
@@ -94,23 +95,22 @@ const hs = hyperstream({
 
 // Create a readable stream from a string
 const encoder = new TextEncoder()
-const input = new ReadableStream({
-    start(controller) {
-        controller.enqueue(encoder.encode('<html><head><title id="title"></title></head><body><div class="content"></div></body></html>'))
-        controller.close()
-    }
-})
+const input = S.from([
+    encoder.encode('<html><head><title id="title"></title></head><body><div class="content"></div></body></html>')
+]).toStream()
 
 // Pipe through hyperstream and consume the result
 const decoder = new TextDecoder()
-const reader = input.pipeThrough(hs.transform).getReader()
-let result = ''
-
-while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    result += decoder.decode(value)
+const output = input.pipeThrough(hs.transform)
+const chunks = await S(output).toArray()
+const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+const bytes = new Uint8Array(totalLength)
+let offset = 0
+for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.length
 }
+const result = decoder.decode(bytes)
 
 console.log(result)
 ```
@@ -146,16 +146,12 @@ Pass a `ReadableStream` as the value to insert streamed content:
 ```ts
 import hyperstream from '@substrate-system/hyperstream'
 import fs from 'node:fs'
+import { S } from '@substrate-system/stream'
 
 // Helper to convert a file to a ReadableStream
 function fileToStream(path: string): ReadableStream<Uint8Array> {
     const content = fs.readFileSync(path)
-    return new ReadableStream({
-        start(controller) {
-            controller.enqueue(new Uint8Array(content))
-            controller.close()
-        }
-    })
+    return S.from([new Uint8Array(content)]).toStream()
 }
 
 const hs = hyperstream({
@@ -165,18 +161,18 @@ const hs = hyperstream({
 
 // Process template
 const template = fileToStream('./template.html')
-const reader = template.pipeThrough(hs.transform).getReader()
-
-// Collect output
-const chunks: Uint8Array[] = []
-while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    chunks.push(value)
+const output = template.pipeThrough(hs.transform)
+const chunks = await S(output).toArray()
+const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+const bytes = new Uint8Array(totalLength)
+let offset = 0
+for (const chunk of chunks) {
+    bytes.set(chunk, offset)
+    offset += chunk.length
 }
 
 const decoder = new TextDecoder()
-console.log(decoder.decode(Buffer.concat(chunks)))
+console.log(decoder.decode(bytes))
 ```
 
 ### Attribute manipulation
