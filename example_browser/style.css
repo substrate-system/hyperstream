@@ -1,16 +1,18 @@
+@import url("@substrate-system/button/css");
+
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    font-family: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     background: #f6f7fb;
     color: #10131a;
 }
 
 .page {
-    width: min(960px, 100% - 2rem);
+    width: min(1200px, 100% - 2rem);
     margin: 2rem auto;
     display: grid;
     gap: 1rem;
@@ -20,21 +22,78 @@ h1, h2 {
     margin: 0 0 0.5rem;
 }
 
-section {
+.columns,
+.result {
     background: white;
     border: 1px solid #d9dce4;
-    border-radius: 8px;
     padding: 1rem;
 }
 
-pre {
-    margin: 0;
+.columns {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr 1fr;
+}
+
+.column {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+}
+
+label {
+    font-size: 0.9rem;
+    color: #4b5568;
+}
+
+.editor {
+    width: 100%;
+    min-height: 220px;
+    border: 1px solid #c9d0dc;
+    padding: 0.75rem;
+    background: #fcfdff;
+    color: #10131a;
+    font: inherit;
+    resize: vertical;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & substrate-button {
+        margin-top: 1.5rem;
+    }
+}
+
+.output,
+.error {
+    margin: 0 0 1rem;
+    padding: 0.75rem;
+    border: 1px solid #d9dce4;
+    background: #f9fafc;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
+.error {
+    border-color: #d14a4a;
+    background: #fff1f1;
+    color: #8f1d1d;
+}
+
 .live {
     border: 1px dashed #c1c7d3;
-    border-radius: 6px;
     padding: 0.75rem;
+}
+
+@media (max-width: 900px) {
+    .columns {
+        grid-template-columns: 1fr;
+    }
+
+    .editor {
+        min-height: 180px;
+    }
 }

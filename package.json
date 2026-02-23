@@ -29,6 +29,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@substrate-system/button": "^0.0.35",
     "@substrate-system/stream": "^0.0.5",
     "concat-stream": "^2.0.0",
     "css-select": "^6.0.0",

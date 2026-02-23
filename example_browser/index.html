@@ -10,20 +10,53 @@
     <main class="page">
         <h1>hyperstream browser example</h1>
         <p>
-            Transform HTML in the browser using CSS selectors.
+            Hyperstream is now usable in the browser thanks to
+            <a
+                href="https://developer.mozilla.org/en-US/docs/Web/API/Streams_API"
+            >web streams</a>.
         </p>
 
-        <section>
-            <h2>Input template</h2>
-            <pre id="input"></pre>
+        <section class="columns">
+            <div class="column">
+                <h2>Input</h2>
+
+                <label for="templateInput">HTML template</label>
+                <textarea
+                    id="templateInput"
+                    class="editor"
+                    spellcheck="false"
+                ></textarea>
+
+                <label for="contentInput">Input content (JSON)</label>
+                <textarea
+                    id="contentInput"
+                    class="editor"
+                    spellcheck="false"
+                ></textarea>
+            </div>
+
+            <div class="column">
+                <h2>Transform</h2>
+
+                <label for="transformInput">JS transform function</label>
+                <textarea
+                    id="transformInput"
+                    class="editor"
+                    spellcheck="false"
+                ></textarea>
+
+                <div class="controls">
+                    <substrate-button id="runButton" type="button">
+                        start hyperstreaming
+                    </substrate-button>
+                </div>
+            </div>
         </section>
 
-        <section>
-            <h2>Transformed output</h2>
-            <pre id="output"></pre>
-        </section>
-
-        <section>
+        <section class="result">
+            <h2>Output HTML</h2>
+            <pre id="output" class="output"></pre>
+            <pre id="error" class="error" hidden></pre>
             <h2>Rendered result</h2>
             <div id="live" class="live"></div>
         </section>
