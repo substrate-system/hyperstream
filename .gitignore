@@ -7,7 +7,6 @@ test/index.d.ts*
 dist
 public
 .env
-
 .cursor
 .repomix-output.txt
 .claude

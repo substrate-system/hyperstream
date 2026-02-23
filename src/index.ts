@@ -519,7 +519,7 @@ export class Hyperstream {
 /**
  * Create a hyperstream from a string (convenience function)
  */
-export async function hyperstreamFromString (
+export async function fromString (
     html:string,
     config:HyperstreamConfig = {}
 ):Promise<string> {

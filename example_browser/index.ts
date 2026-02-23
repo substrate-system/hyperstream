@@ -1,5 +1,5 @@
 import '@substrate-system/button'
-import { hyperstreamFromString } from '../src/index.js'
+import { fromString } from '../src/index.js'
 
 type TransformBuilder = (content:unknown)=>unknown|Promise<unknown>
 
@@ -100,7 +100,7 @@ async function run ():Promise<void> {
     const content = parseContent(contentInput.value)
     const transform = parseTransform(transformInput.value)
     const config = await transform(content)
-    const transformed = await hyperstreamFromString(templateInput.value, config as never)
+    const transformed = await fromString(templateInput.value, config as never)
 
     output.textContent = transformed
     live.innerHTML = transformed

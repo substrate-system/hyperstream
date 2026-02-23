@@ -30,7 +30,7 @@ for compatibility with browsers, Cloudflare Workers, and Deno.
   * [Transform functions](#transform-functions)
 - [API](#api)
   * [`hyperstream(config)`](#hyperstreamconfig)
-  * [`hyperstreamFromString(html, config)`](#hyperstreamfromstringhtml-config)
+  * [`fromString(html, config)`](#fromstringhtml-config)
   * [`createHyperstream(config)`](#createhyperstreamconfig)
   * [`processHyperstream(input, config)`](#processhyperstreaminput-config)
 - [Configuration](#configuration)
@@ -56,6 +56,8 @@ npm start
 ## Example
 
 Take some template HTML, and transform it using CSS selectors.
+
+### Full Stream Example
 
 Stream a template file through `hyperstream`, inject stream values by selector,
 then stream the transformed output into `result.html`:
@@ -122,9 +124,9 @@ await run()
 Process HTML with string replacements:
 
 ```ts
-import { hyperstreamFromString } from '@substrate-system/hyperstream'
+import { fromString } from '@substrate-system/hyperstream'
 
-const result = await hyperstreamFromString(
+const result = await fromString(
     `<html>
         <head><title id="title"></title></head>
         <body>
@@ -191,9 +193,9 @@ Use `_appendHtml`, `_prependHtml`, `_append` (text), or `_prepend` (text)
 to add content before or after existing content:
 
 ```ts
-import { hyperstreamFromString } from '@substrate-system/hyperstream'
+import { fromString } from '@substrate-system/hyperstream'
 
-const result = await hyperstreamFromString(
+const result = await fromString(
     '<ul class="list"><li>First</li></ul><span class="greeting">World</span>',
     {
         '.list': { _appendHtml: '<li>New item</li>' },
@@ -250,9 +252,9 @@ console.log(decoder.decode(bytes))
 Set attributes directly, or use `append`/`prepend` to modify existing values:
 
 ```ts
-import { hyperstreamFromString } from '@substrate-system/hyperstream'
+import { fromString } from '@substrate-system/hyperstream'
 
-const result = await hyperstreamFromString(
+const result = await fromString(
     '<input><button class="btn">Click</button><a>Link</a>',
     {
         'input': { value: 'default', placeholder: 'Enter text...' },
@@ -266,7 +268,9 @@ console.log(result)
 
 Output:
 ```html
-<input value="default" placeholder="Enter text..."><button class="btn active">Click</button><a href="https://example.com">Link</a>
+<input value="default" placeholder="Enter text...">
+<button class="btn active">Click</button>
+<a href="https://example.com">Link</a>
 ```
 
 ### Transform functions
@@ -274,9 +278,9 @@ Output:
 Pass a function to transform the existing content:
 
 ```ts
-import { hyperstreamFromString } from '@substrate-system/hyperstream'
+import { fromString } from '@substrate-system/hyperstream'
 
-const result = await hyperstreamFromString(
+const result = await fromString(
     '<span class="count">41</span><span class="upper">hello</span>',
     {
         '.count': (html) => String(parseInt(html) + 1),
@@ -303,7 +307,7 @@ Returns an object with:
 - `readable`: The readable side of the transform
 - `writable`: The writable side of the transform
 
-### `hyperstreamFromString(html, config)`
+### `fromString(html, config)`
 
 Convenience function to process HTML from a string.
 
