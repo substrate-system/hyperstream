@@ -13,30 +13,14 @@
  * - First-only matching with :first suffix
  */
 
-import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { S } from '@substrate-system/stream'
-import { processHyperstream } from '../src/index.js'
+import { fromFile } from '@substrate-system/stream/node'
+import hyperstream, { toBuffer } from '../src/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-
-/**
- * Convert a string to a Web ReadableStream
- */
-function stringToStream (str:string):ReadableStream<Uint8Array> {
-    const encoder = new TextEncoder()
-    return S.from([encoder.encode(str)]).toStream()
-}
-
-/**
- * Read a file as a Web ReadableStream
- */
-function fileToStream (filepath:string):ReadableStream<Uint8Array> {
-    const content = fs.readFileSync(filepath)
-    return S.from([new Uint8Array(content)]).toStream()
-}
 
 async function main () {
     console.log('Hyperstream Example\n')
@@ -45,20 +29,38 @@ async function main () {
 
     // Read the template file as a stream
     const templatePath = join(__dirname, 'template.html')
-    const templateStream = fileToStream(templatePath)
+    const templateStream = await fromFile(templatePath)
 
     // Current timestamp for build info
     const buildTime = new Date().toISOString()
 
+    // Load partial streams
+    const navStream = await fromFile(join(__dirname, 'partials/nav.html'))
+    const footerStream = await fromFile(
+        join(__dirname, 'partials/footer.html')
+    )
+    const featuresStream = await fromFile(
+        join(__dirname, 'partials/features.html')
+    )
+
+    const hs = hyperstream({
+        '#page-title': 'abc'
+    })
+
+    templateStream.pipeTo(hs.writable)
+    const stringResult = await hs.asString()
+    console.log('**result**', stringResult)
+
     // Process the template with all transformation types
-    const result = await processHyperstream(templateStream, {
+    const template2 = await fromFile(templatePath)
+    const resultBuffer = await toBuffer(template2, {
         // ─────────────────────────────────────────────────────────────
         // 1. STREAM INJECTION FROM FILES
         // Inject content from external HTML files via ReadableStream
         // ─────────────────────────────────────────────────────────────
-        '#main-nav': fileToStream(join(__dirname, 'partials/nav.html')),
-        '#main-footer': fileToStream(join(__dirname, 'partials/footer.html')),
-        '#features-list': fileToStream(join(__dirname, 'partials/features.html')),
+        '#main-nav': navStream,
+        '#main-footer': footerStream,
+        '#features-list': featuresStream,
 
         // ─────────────────────────────────────────────────────────────
         // 2. STRING REPLACEMENT (inline template strings)
@@ -166,7 +168,7 @@ async function main () {
 
     // Convert result to string and output
     const decoder = new TextDecoder()
-    const html = decoder.decode(result)
+    const html = decoder.decode(resultBuffer)
 
     console.log('Transformed HTML:')
     console.log('-'.repeat(60))
@@ -191,3 +193,21 @@ async function main () {
 }
 
 main().catch(console.error)
+
+// /**
+//  * Read a file as a Web ReadableStream
+//  */
+// async function fileToStream (
+//     filepath:string
+// ):Promise<ReadableStream<Uint8Array>> {
+//     const fileHandle = await open(filepath)
+//     return fileHandle.readableWebStream()
+// }
+
+/**
+ * Convert a string to a Web ReadableStream
+ */
+function stringToStream (str:string):ReadableStream<Uint8Array> {
+    const encoder = new TextEncoder()
+    return S.from([encoder.encode(str)]).toStream()
+}
