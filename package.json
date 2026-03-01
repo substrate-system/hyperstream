@@ -1,6 +1,6 @@
 {
   "name": "@substrate-system/hyperstream",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Stream html by CSS selector.",
   "type": "module",
   "directories": {
