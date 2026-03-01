@@ -20,9 +20,8 @@ for compatibility with browsers, Cloudflare Workers, and Deno.
 <!-- toc -->
 
 - [Install](#install)
-- [Browser Example App](#browser-example-app)
+- [Browser Example](#browser-example)
 - [Example](#example)
-  * [Full Stream Example](#full-stream-example)
   * [Strings](#strings)
   * [TransformStream API](#transformstream-api)
   * [Streams](#streams)
@@ -45,55 +44,74 @@ for compatibility with browsers, Cloudflare Workers, and Deno.
 npm i -S @substrate-system/hyperstream
 ```
 
-## Browser Example App
+## Example
 
-A browser demo is in [`/example_browser`](./example_browser/).
+Take some template HTML, and transform it using CSS selectors.
+
+```ts
+import hyperstream from '@substrate-system/hyperstream'
+import { createReadStream, createWriteStream } from 'node:fs'
+import { Readable, Writable } from 'node:stream'
+
+const hs = hyperstream({
+    '#title': 'Hello World',
+    '.content': { _html: '<p>Injected content</p>' }
+})
+
+const destination = Writable.toWeb(createWriteStream('./output.html'))
+
+Readable.toWeb(createReadStream('./template.html'))
+    .pipeThrough(hs.transform)
+    .pipeTo(destination)
+```
+
+
+## Browser Example
+
+Because this is using 
+[Web Streams](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API),
+we can run it in a browser too. A browser demo is in
+[`/example_browser`](./example_browser/).
 
 ```sh
 npm start
 ```
 
-## Example
+### Streams as Values
 
-Take some template HTML, and transform it using CSS selectors.
-
-Stream a template file through `hyperstream`, inject stream values by selector,
-then stream the transformed output into `result.html`:
+Stream a template file through `hyperstream`, inject streams by selector,
+then stream the transformed output into `result.html`. The selector values
+are streams here. You can also pass in [string as values](#strings).
 
 ```ts
 import hyperstream from '@substrate-system/hyperstream'
 import { S } from '@substrate-system/stream'
-import { toFileSink } from '@substrate-system/stream/node'
-import { open, type FileHandle } from 'node:fs/promises'
-
-function toByteStream (fh:FileHandle):ReadableStream<Uint8Array> {
-    return fh.readableWebStream({ type: 'bytes' }) as ReadableStream<Uint8Array>
-}
+import { createWriteStream } from 'node:fs'
+import { Writable } from 'node:stream'
+import { open } from 'node:fs/promises'
 
 async function run ():Promise<void> {
     const template = await open('./template.html', 'r')
     const nav = await open('./partials/nav.html', 'r')
     const footer = await open('./partials/footer.html', 'r')
-    const result = await open('./result.html', 'w')
 
     try {
+        // setup template logic
         const hs = hyperstream({
-            '#main-nav': toByteStream(nav),
-            '#main-footer': toByteStream(footer),
-            '#build-time': S.from([
-                new TextEncoder().encode(new Date().toISOString())
-            ]).toStream()
+            '#main-nav': nav.readableWebStream(),
+            '#main-footer': footer.readableWebStream(),
+            '#build-time': S.from([new Date().toISOString()]).toStream()
         })
 
-        await toByteStream(template)
+        // build the template
+        await template.readableWebStream()
             .pipeThrough(hs.transform)
-            .pipeTo(toFileSink(result))
+            .pipeTo(Writable.toWeb(createWriteStream('./result.html')))
     } finally {
         await Promise.allSettled([
             template.close(),
             nav.close(),
             footer.close(),
-            result.close()
         ])
     }
 }
@@ -103,28 +121,31 @@ await run()
 
 ### Strings
 
-Process HTML with string replacements:
+Use strings as selector values, and use a string as the template.
 
 ```ts
+// our template is a string, not stream
 import { fromString } from '@substrate-system/hyperstream'
 
-const result = await fromString(
-    `<html>
-        <head><title id="title"></title></head>
-        <body>
-            <div class="content"></div>
-        </body>
-    </html>`,
-    {
-        '#title': 'Hello World',
-        '.content': { _html: '<p>This is the content</p>' }
-    }
-)
+const template = `<html>
+    <head>
+        <title id="title"></title>
+    </head>
+    <body>
+        <div class="content"></div>
+    </body>
+</html>`
+
+const result = await fromString(template, {
+    '#title': 'Hello World',
+    '.content': { _html: '<p>This is the content</p>' }
+})
 
 console.log(result)
 ```
 
-Output:
+#### Output
+
 ```html
 <html>
     <head><title id="title">Hello World</title></head>
@@ -136,7 +157,7 @@ Output:
 
 ### TransformStream API
 
-Use the `TransformStream` interface for streaming processing:
+Use the `TransformStream` interface:
 
 ```ts
 import hyperstream from '@substrate-system/hyperstream'
@@ -147,25 +168,17 @@ const hs = hyperstream({
     '.content': { _html: '<p>This is the content</p>' }
 })
 
-// Create a readable stream from a string
-const encoder = new TextEncoder()
-const input = S.from([
-    encoder.encode('<html><head><title id="title"></title></head><body><div class="content"></div></body></html>')
-]).toStream()
+const template = `<html>
+    <head><title id="title"></title></head>
+    <body>
+        <div class="content"></div>
+    </body>
+    </html>
+`
 
-// Pipe through hyperstream and consume the result
-const decoder = new TextDecoder()
-const output = input.pipeThrough(hs.transform)
-const chunks = await S(output).toArray()
-const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
-const bytes = new Uint8Array(totalLength)
-let offset = 0
-for (const chunk of chunks) {
-    bytes.set(chunk, offset)
-    offset += chunk.length
-}
-const result = decoder.decode(bytes)
+S.from([template]).toStream().pipeTo(hs.writable)
 
+const result = await hs.asString()
 console.log(result)
 ```
 
@@ -177,6 +190,8 @@ to add content before or after existing content:
 ```ts
 import { fromString } from '@substrate-system/hyperstream'
 
+// takes a string as input
+// returns a string as output
 const result = await fromString(
     '<ul class="list"><li>First</li></ul><span class="greeting">World</span>',
     {
