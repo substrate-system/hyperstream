@@ -36,7 +36,7 @@
     "parse5-htmlparser2-tree-adapter": "^8.0.0"
   },
   "devDependencies": {
-    "@substrate-system/button": "^0.0.35",
+    "@substrate-system/button": "^0.0.38",
     "@substrate-system/css-normalize": "^0.0.13",
     "@substrate-system/debug": "^0.9.32",
     "@substrate-system/tapout": "^0.0.37",
